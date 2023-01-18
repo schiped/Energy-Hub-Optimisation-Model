@@ -4,7 +4,7 @@ Created on Wed Jul 13 23:37:58 2022
 
 @author: schiaffipn
 Optimization Model for HPP. 
-Variables: Number of Turbines, Solar PV Area, Storage Size, Installed capacity Electrolyser & Compressor 
+Six Decision Variables: Number of Turbines, Solar PV Area, Storage Size (Batteries and Hydrogen storage), Installed capacity of Electrolyser & Compressor 
 Assumptions and adopted values:
     - Locations
     - Distances to shore
@@ -671,7 +671,6 @@ ax2.set_ylabel("Energy [kWh]", fontsize=font_size)
 plt.grid(True)
 plt.legend()
 
-
 #Hydrogen Production
 fig, (ax3) = plt.subplots(figsize=(12,6))
 ax3.plot(x[tf_start:tf_end],  H2_flow[tf_start:tf_end],color = '#38761d', alpha=0.5, label='Total Hydrogen Production') 
@@ -682,7 +681,6 @@ ax3.set_xlabel("Hours [h]", fontsize=font_size)
 ax3.set_ylabel("Hydrogen [kg]", fontsize=font_size)
 plt.grid(True)
 plt.legend()
-
 
 #SoC
 fig, (ax4) = plt.subplots(figsize=(12,6))
@@ -696,7 +694,6 @@ plt.grid(True)
 plt.legend()
 
 plt.show()
-
 
 #Time frame analysed
 tf_start =  1000
@@ -714,8 +711,6 @@ ax1.set_xlabel("Hours [h]", fontsize=font_size)
 ax1.set_ylabel("Energy [kWh]", fontsize=font_size)
 plt.grid(True)
 plt.legend()
-
-plt.savefig('filename.png', dpi=300)
 
 #Electricity Distribution Export/Consumption (Grid, Compressor, Hydrogen)
 fig, (ax2) = plt.subplots(figsize=(12,6))
