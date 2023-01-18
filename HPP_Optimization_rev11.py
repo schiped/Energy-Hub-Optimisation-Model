@@ -3,7 +3,7 @@
 Created on Wed Jul 13 23:37:58 2022
 
 @author: schiaffipn
-Optimization Model for HPP. 
+Optimization Model for Energy Hub. 
 Six Decision Variables: Number of Turbines, Solar PV Area, Storage Size (Batteries and Hydrogen storage), Installed capacity of Electrolyser & Compressor 
 Assumptions and adopted values:
     - Locations
