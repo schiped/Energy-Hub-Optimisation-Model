@@ -34,10 +34,11 @@ def readExcel (input_file):                                                    #
     df_EPV_h = pd.read_excel(input_file,sheet_name="Solar_Power_Data", header = 0, usecols=[0,1])
     df_Export = pd.read_excel(input_file,sheet_name="Export_Capacity", header = 0, usecols=[0,1])
     df_H2_Base_Load = pd.read_excel(input_file,sheet_name="H_BaseLoad", header = 0, usecols=[0,1])
+    df_electricity_prices = pd.read_excel(input_file,sheet_name="Electricity_Prices", header = 0, usecols=[0,1])
     
-    return df_general, df_economic, df_solar, df_wind, df_storage, df_Hydrogen, df_EWind_h, df_EPV_h, df_Export, df_H2_Base_Load
+    return df_general, df_economic, df_solar, df_wind, df_storage, df_Hydrogen, df_EWind_h, df_EPV_h, df_Export, df_H2_Base_Load, df_electricity_prices
 
-df_general, df_economic, df_solar, df_wind, df_storage, df_Hydrogen, df_EWind_h, df_EPV_h, df_Export, df_H2_Base_Load = readExcel(input_file)
+df_general, df_economic, df_solar, df_wind, df_storage, df_Hydrogen, df_EWind_h, df_EPV_h, df_Export, df_H2_Base_Load, df_electricity_prices = readExcel(input_file)
 
 if df_general.loc['hub_config','Input'] == 1:     #Peak shaving  #export as much as the cable capacity 
     print('\n HUB Config = Dedicated Electricity Production')
@@ -146,7 +147,7 @@ H2_Storage_flow =  costs_production_flow(df_economic.loc['OPEX_H2_storage','Inpu
 np_H2_Storage_OPEX = np_calculator(H2_Storage_flow, df_general.loc['rate_return','Input'])
 
 "---------------------------------PYOMO MODEL---------------------------------"
-def CreateModel (df_general, df_economic, df_solar, df_wind, df_storage, df_Hydrogen, df_EWind_h, df_EPV_h, df_Export, df_H2_Base_Load, compressor_power):
+def CreateModel (df_general, df_economic, df_solar, df_wind, df_storage, df_Hydrogen, df_EWind_h, df_EPV_h, df_Export, df_H2_Base_Load,df_electricity_prices, compressor_power):
     model = pyo.ConcreteModel(name='HPP - Model Optimisation')
     
     #Defining Sets
@@ -196,7 +197,7 @@ def CreateModel (df_general, df_economic, df_solar, df_wind, df_storage, df_Hydr
 
 
     #Hydrogen Price
-    model.H2_price = pyo.Param(initialize = 5, mutable=(True))
+    model.H2_price = pyo.Param(initialize = 15, mutable=(True))
     #Electricity Price
     model.electricity_price = pyo.Param(initialize = df_economic.loc['electricity_price','Input'], mutable=(True))    
     
@@ -247,9 +248,9 @@ def CreateModel (df_general, df_economic, df_solar, df_wind, df_storage, df_Hydr
 # OBJECTIVE FUNCTIONS
     if df_general.loc['hub_config','Input'] == 1:
 #OPERATION STRATEGY 1
-        def OF (model):                                                                                                                                                                                                                                                                                                                                                                                         #Penalty to energy curtailed
-             return ((model.x1*100*100*df_solar.loc['floater_kWm2','Input'])*(model.PV_CAPEX+model.PV_OPEX)) + (model.x2*(model.W_CAPEX+model.W_OPEX)) + (model.x3*(model.CAPEX_Storage + model.OPEX_Storage)) + (model.x4*(model.CAPEX_electrolyser + model.OPEX_electrolyser)) + (model.x5*(model.CAPEX_compressor + model.OPEX_compressor)) + (model.x6*(model.CAPEX_h2_storage + model.OPEX_h2_storage)) + (sum((model.ECurtailed_h[t]*1)/((1+df_general.loc['rate_return','Input'])**(i+1)) for t in model.T for i in range(int(df_general.loc['system_lifetime','Input'])))) #- (sum((model.Electricity_export[t]*model.electricity_price)/((1+df_general.loc['rate_return','Input'])**(i+1)) for t in model.T for i in range(int(df_general.loc['system_lifetime','Input']))))  + (sum((model.E_H2_Total_h[t]*model.electricity_price)/((1+df_general.loc['rate_return','Input'])**(i+1)) for t in model.T for i in range(int(df_general.loc['system_lifetime','Input'])))) - (sum((model.H2_Export_h[t]*model.H2_price)/((1+df_general.loc['rate_return','Input'])**(i+1)) for t in model.T for i in range(int(df_general.loc['system_lifetime','Input'])))) 
-        model.ObjFunction = pyo.Objective(rule=OF, sense = pyo.minimize)
+        def OF (model):                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       #Penalty to energy curtailed
+             return ((sum((model.H2_Export_h[t]*model.H2_price)/((1+df_general.loc['rate_return','Input'])**(i+1)) for t in model.T for i in range(int(df_general.loc['system_lifetime','Input'])))) + (sum((model.Electricity_export[t]*df_electricity_prices.loc[t-1,'Price EUR/MWh'])/((1+df_general.loc['rate_return','Input'])**(i+1)) for t in model.T for i in range(int(df_general.loc['system_lifetime','Input']))))) - (((model.x1*100*100*df_solar.loc['floater_kWm2','Input'])*(model.PV_CAPEX+model.PV_OPEX)) + (model.x2*(model.W_CAPEX+model.W_OPEX)) + (model.x3*(model.CAPEX_Storage + model.OPEX_Storage)) + (model.x4*(model.CAPEX_electrolyser + model.OPEX_electrolyser)) + (model.x5*(model.CAPEX_compressor + model.OPEX_compressor)) + (model.x6*(model.CAPEX_h2_storage + model.OPEX_h2_storage))) # + (sum((model.E_H2_Total_h[t]*df_electricity_prices.loc[t-1,'Price EUR/MWh'])/((1+df_general.loc['rate_return','Input'])**(i+1)) for t in model.T for i in range(int(df_general.loc['system_lifetime','Input'])))))   #+ (sum((model.ECurtailed_h[t]*1)/((1+df_general.loc['rate_return','Input'])**(i+1)) for t in model.T for i in range(int(df_general.loc['system_lifetime','Input'])))) 
+        model.ObjFunction = pyo.Objective(rule=OF, sense = pyo.maximize)
     elif df_general.loc['hub_config','Input'] == 2: #H2 Base Load
 #OPERATION STRATEGY 2
         def OF (model):                                                                                                                                                                                                                                                                                                                                                                                         #Penalty to energy curtailed
@@ -421,7 +422,7 @@ def CreateModel (df_general, df_economic, df_solar, df_wind, df_storage, df_Hydr
     
     return model
 
-model = CreateModel(df_general, df_economic, df_solar, df_wind, df_storage, df_Hydrogen, df_EWind_h, df_EPV_h, df_Export, df_H2_Base_Load, compressor_power)      
+model = CreateModel(df_general, df_economic, df_solar, df_wind, df_storage, df_Hydrogen, df_EWind_h, df_EPV_h, df_Export, df_H2_Base_Load,df_electricity_prices, compressor_power)      
   
 opt = pyo.SolverFactory('gurobi')
 results = opt.solve(model, tee=True)
@@ -656,7 +657,7 @@ ax1.set_xlabel("Hours [h]", fontsize=font_size)
 ax1.set_ylabel("Energy [kWh]", fontsize=font_size)
 plt.grid(True)
 plt.legend()
-plt.savefig('filename.png', dpi=300)
+
 
 #Electricity Distribution Export/Consumption (Grid, Compressor, Hydrogen)
 fig, (ax2) = plt.subplots(figsize=(12,6))
