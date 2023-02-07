@@ -62,45 +62,6 @@ def costs_production_flow(opex_production_asset,lifetime):
     cost_production_flow[1:lifetime+1] = opex_production_asset #opex or production starts from year 1.. 
     return cost_production_flow
 
-##I didn't use this table at the end
-# def install_monopile(df_general):
-#     # Used for calculation of electrolyser and battery structures
-#     # (1) Gonzalez-Rodriguez, Angel G. "Review of offshore wind farm cost components." Energy for Sustainable Development 37 (2017): 10-19.
-#     # (2) Green, Richard, and Nicholas Vasilakos. "The economics of offshore wind." Energy Policy 39.2 (2011): 496-502.
-    
-#     # A first representative cost of installation was taken as the average of the values in Table 12 from (1), and divided by 2 to account for the effect of no electrical equipment (as recommended on page 15)
-#     cost_installation_per_kW = (115/2)/1000
-#     cost_installation = cost_installation_per_kW 
-    
-#     # The following look-up table adds a multiplier to a platform cost given the water depth and distance to shore, from (2)
-#     data = {'0<d<10km'     : [1.00, 1.07, 1.24, 1.40],
-#             '10<d<20km'    : [1.02, 1.09, 1.26, 1.43],
-#             '20<d<30km'    : [1.04, 1.11, 1.29, 1.46],
-#             '30<d<40km'    : [1.07, 1.14, 1.32, 1.49],
-#             '40<d<50km'    : [1.09, 1.16, 1.34, 1.52],
-#             '50<d<100km'   : [1.18, 1.26, 1.46, 1.65],
-#             '100<d<200km'  : [1.41, 1.50, 1.74, 1.97],
-#             'd>200km'      : [1.60, 1.71, 1.98, 2.23]}
-#     df_multiplier = pd.DataFrame(data, index=["10-20", "20-30", "30-40", "40-50"])
-#     df_multiplier.index.name = 'Water Depth [m]'
-    
-#     if df_general.loc['shore_distance','Input'] > 200:    idx_shore_distance = 7
-#     elif df_general.loc['shore_distance','Input'] > 100:  idx_shore_distance = 6
-#     elif df_general.loc['shore_distance','Input'] > 50:   idx_shore_distance = 5
-#     elif df_general.loc['shore_distance','Input'] > 40:   idx_shore_distance = 4
-#     elif df_general.loc['shore_distance','Input'] > 30:   idx_shore_distance = 3
-#     elif df_general.loc['shore_distance','Input'] > 20:   idx_shore_distance = 2
-#     elif df_general.loc['shore_distance','Input'] > 10:   idx_shore_distance = 1
-#     elif df_general.loc['shore_distance','Input'] > 0:    idx_shore_distance = 0
-#     if df_general.loc['water_depth','Input'] > 40:        idx_water_depth = 3
-#     elif df_general.loc['water_depth','Input'] > 30:      idx_water_depth = 2
-#     elif df_general.loc['water_depth','Input'] > 20:      idx_water_depth = 1
-#     elif df_general.loc['water_depth','Input'] > 10:      idx_water_depth = 0
-    
-#     cost_installation = cost_installation * df_multiplier.iloc[idx_water_depth, idx_shore_distance]
-    
-#     return cost_installation
-
 def power_compressor(df_Hydrogen):
     # Calculate estimated compressor power
     Tmean = 333.15  # Inlet temperature of the compressor
